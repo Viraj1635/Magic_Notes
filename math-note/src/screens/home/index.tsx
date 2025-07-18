@@ -160,37 +160,48 @@ export default function Home(){
         }
     };
 
-    const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => { 
+    const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => { 
         const canvas = canvasRef.current;
         if (canvas){
             canvas.style.background='black';
             const ctx = canvas.getContext('2d');
             if (ctx) {
+                const pos = getEventPos(e);
                 ctx.beginPath();
-                ctx.moveTo(e.nativeEvent.offsetX,e.nativeEvent.offsetY);
+                ctx.moveTo(pos.x, pos.y);
                 setIsDrawing(true);
             }
         }
     };
-
-    const stopDrawing = ()=>{
+    
+    const stopDrawing = () => {
         setIsDrawing(false);
-    }
-
-    const draw = (e: React.MouseEvent<HTMLCanvasElement>)=>{
-        if(!isDrawing){
-            return;
-        }
-        const canvas= canvasRef.current;
-        if(canvas){
-            const ctx =canvas.getContext("2d");
-            if(ctx){
-                ctx.strokeStyle= color;
-                ctx.lineTo(e.nativeEvent.offsetX,e.nativeEvent.offsetY);
+    };
+    
+    const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        if (canvas) {
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+                ctx.strokeStyle = color;
+                const pos = getEventPos(e);
+                ctx.lineTo(pos.x, pos.y);
                 ctx.stroke();
             }
         }
     };
+    
+    // Function to get position for both mouse & touch events
+    const getEventPos = (e: any) => {
+        if (e.nativeEvent instanceof TouchEvent) {
+            const touch = e.nativeEvent.touches[0];
+            return { x: touch.clientX, y: touch.clientY };
+        } else {
+            return { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
+        }
+    };
+    
 
     return(
         <>
@@ -223,10 +234,10 @@ export default function Home(){
                 ref={canvasRef} 
                 id="canvas"
                 className="absolute top-0 left-0 w-full h-full"
-                onMouseDown={startDrawing}
+                onMouseDown={startDrawing} onTouchStart={startDrawing}
+                onMouseUp={stopDrawing} onTouchEnd={stopDrawing}
+                onMouseMove={draw} onTouchMove={draw}
                 onMouseOut={stopDrawing}
-                onMouseUp={stopDrawing}
-                onMouseMove={draw}
             />
             
             {latexExpression && latexExpression.map((latex, index) => (
